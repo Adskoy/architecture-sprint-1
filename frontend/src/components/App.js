@@ -1,20 +1,50 @@
-import React from "react";
+import React, {lazy, Suspense} from "react";
 import { Route, useHistory, Switch } from "react-router-dom";
 import Header from "./Header";
 import Main from "./Main";
 import Footer from "./Footer";
 import PopupWithForm from "./PopupWithForm";
-import ImagePopup from "./ImagePopup";
 import api from "../utils/api";
-import { CurrentUserContext } from "../contexts/CurrentUserContext";
-import EditProfilePopup from "./EditProfilePopup";
-import EditAvatarPopup from "./EditAvatarPopup";
-import AddPlacePopup from "./AddPlacePopup";
-import Register from "./Register";
-import Login from "./Login";
-import InfoTooltip from "./InfoTooltip";
+import { CurrentUserContext } from "shared";
 import ProtectedRoute from "./ProtectedRoute";
 import * as auth from "../utils/auth.js";
+
+const ImagePopup = lazy(() => import('cards/ImagePopup').catch(() => {
+      return {default: () => <div className='error'>ImagePopup component is not available!</div>};
+    })
+);
+
+const AddPlacePopup = lazy(() => import('cards/AddPlacePopup').catch(() => {
+        return {default: () => <div className='error'>AddPlacePopup component is not available!</div>};
+    })
+);
+
+const EditProfilePopup = lazy(() => import('profile/EditProfilePopup').catch(() => {
+      return {default: () => <div className='error'>EditProfilePopup component is not available!</div>};
+    })
+);
+
+const EditAvatarPopup = lazy(() => import('profile/EditAvatarPopup').catch(() => {
+      return {default: () => <div className='error'>EditAvatarPopup component is not available!</div>};
+    })
+);
+
+const Register = lazy(() => import('auth/Register').catch(() => {
+        return {default: () => <div className='error'>Register component is not available!</div>};
+    })
+);
+
+const Login = lazy(() => import('auth/Login').catch(() => {
+        return {default: () => <div className='error'>Login component is not available!</div>};
+    })
+);
+
+const InfoTooltip = lazy(() => import('auth/InfoTooltip').catch(() => {
+        return {default: () => <div className='error'>InfoTooltip component is not available!</div>};
+    })
+);
+
+
 
 function App() {
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] =
@@ -197,18 +227,20 @@ function App() {
             loggedIn={isLoggedIn}
           />
           <Route path="/signup">
-            <Register onRegister={onRegister} />
+              <Suspense><Register onRegister={onRegister}/></Suspense>
           </Route>
           <Route path="/signin">
-            <Login onLogin={onLogin} />
+              <Suspense><Login onLogin={onLogin}/></Suspense>
           </Route>
         </Switch>
         <Footer />
-        <EditProfilePopup
-          isOpen={isEditProfilePopupOpen}
-          onUpdateUser={handleUpdateUser}
-          onClose={closeAllPopups}
-        />
+          <Suspense fallback={null}>
+              <EditProfilePopup
+                  isOpen={isEditProfilePopupOpen}
+                  onUpdateUser={handleUpdateUser}
+                  onClose={closeAllPopups}
+              />
+          </Suspense>
         <AddPlacePopup
           isOpen={isAddPlacePopupOpen}
           onAddPlace={handleAddPlaceSubmit}
@@ -221,11 +253,13 @@ function App() {
           onClose={closeAllPopups}
         />
         <ImagePopup card={selectedCard} onClose={closeAllPopups} />
-        <InfoTooltip
-          isOpen={isInfoToolTipOpen}
-          onClose={closeAllPopups}
-          status={tooltipStatus}
-        />
+          <Suspense>
+              <InfoTooltip
+              isOpen={isInfoToolTipOpen}
+              onClose={closeAllPopups}
+              status={tooltipStatus}
+          />
+          </Suspense>
       </div>
     </CurrentUserContext.Provider>
   );
