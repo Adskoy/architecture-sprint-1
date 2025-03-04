@@ -1,62 +1,53 @@
 services:
-
-  mongo:
-    image: mongo
-    restart: always
-    logging:
-      driver: none
+  microfrontend-auth:
+    build:
+      context: frontend/microfrontend
+      dockerfile: auth/.dockerfile
+    ports:
+      - "8001:8001"
     healthcheck:
-      test:  echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: wget --no-verbose --tries=1 --spider http://localhost:8001 || exit 1
       interval: 10s
-      timeout: 10s
-      retries: 5
+      retries: 50
       start_period: 10s
+      timeout: 5s
 
-  backend-test:
+  microfrontend-cards:
     build:
-      context: backend
-      dockerfile: ../Dockerfile.backend
-    environment:
-      DB_ADDRESS: mongodb://mongo:27017/mestodb
-    command: npm run lint
-    restart: 'no'
-    depends_on:
-      mongo:
-        condition: service_healthy
-
-  backend:
-    build:
-      context: backend
-      dockerfile: ../Dockerfile.backend
-    environment:
-      DB_ADDRESS: mongodb://mongo:27017/mestodb
-    depends_on:
-      mongo:
-        condition: service_healthy
+      context: frontend/microfrontend
+      dockerfile: cards/.dockerfile
     ports:
-      - 3001:3000
+      - "8003:8003"
     healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8003 || exit 1
       interval: 10s
-      timeout: 2s 
-      start_period: 15s 
-      retries: 5 
-      test: node healthcheck.js
+      retries: 50
+      start_period: 10s
+      timeout: 5s
 
-  frontend-test:
+  microfrontend-profile:
     build:
-      context: frontend
-      dockerfile: ../Dockerfile.frontend
-    command: yarn test:microfrontend
-    restart: 'no'
-    environment:
-          CI: true
-
-  frontend:
-    build:
-      context: frontend
-      dockerfile: ../Dockerfile.frontend
+      context: frontend/microfrontend
+      dockerfile: profile/.dockerfile
     ports:
-      - 3000:3000
+      - "8002:8002"
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8002 || exit 1
+      interval: 10s
+      retries: 50
+      start_period: 10s
+      timeout: 5s
+
+  microfrontend-host:
+    build:
+      context: frontend
+      dockerfile: .dockerfile
+    ports:
+      - "8000:8000"
     depends_on:
-      backend:
+      microfrontend-auth:
+        condition: service_healthy
+      microfrontend-cards:
+        condition: service_healthy
+      microfrontend-profile:
         condition: service_healthy
